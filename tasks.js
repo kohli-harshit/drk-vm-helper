@@ -3,13 +3,13 @@ const retry = require('retry')
 const mongodb = require('mongodb')
 const username = require('username')
 
-const devUrl = 'mongodb://mongodbtrigger:password@ds161580.mlab.com:61580/mongodbtrigger'
-const prodUrl = 'mongodb://localhost:27017/history'
-
-const url = process.env.NODE_ENV === "production" ? prodUrl : devUrl
-
+const url = 'mongodb://noi-qa-jenkins:27017/drk-db';
+const collection_name='vm-loggedin-details';
 const mongoClient = mongodb.MongoClient
 const currentTime = new Date()
+const currentHost=os.hostname()
+const operation = retry.operation()
+
 
 exports.dbEntryTask = (taskType) => {
     const operation = retry.operation()
@@ -18,13 +18,35 @@ exports.dbEntryTask = (taskType) => {
             console.log(currentAttempt)
             mongoClient.connect(url, (err, db) => {
                 if (operation.retry(err)) return
-                const task = db.collection(taskType)
-                task.insert({
-                    userName: user,
-                    taskTime: currentTime,
-					hostName: os.hostname()
-                })
-                db.close()
+                const vmDetailsCollection = db.collection(collection_name)
+                
+                var currentHostDocument = vmDetailsCollection.findOne({'hostName':currentHost}).then(function(doc) {
+                    if(doc)
+                    {
+                        console.log('Record found. Updating...');
+                        vmDetailsCollection.update(
+                            {_id:doc._id},
+                            {$set:{
+                                hostName: currentHost,
+                                updated_on: currentTime,
+                                status:taskType
+                            }},dbOperationFinished);                        
+                    }
+                    else
+                    {
+                        console.log('No record found.Inserting...');
+                        vmDetailsCollection.insert({
+                            userName: user,
+                            updated_on: currentTime,
+                            hostName: currentHost,
+                            status:taskType
+                        },dbOperationFinished)
+                    }
+                });
+
+                var dbOperationFinished = function(){
+                    db.close();    
+                }
             })
         })
     })

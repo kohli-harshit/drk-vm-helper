@@ -2,6 +2,7 @@ const os = require('os')
 const retry = require('retry')
 const mongodb = require('mongodb')
 const username = require('username')
+const moment = require('moment')
 
 const url = 'mongodb://noi-qa-jenkins:27017/drk-db';
 const collection_name='vm-loggedin-details';
@@ -19,7 +20,9 @@ exports.dbEntryTask = (taskType) => {
             mongoClient.connect(url, (err, db) => {
                 if (operation.retry(err)) return
                 const vmDetailsCollection = db.collection(collection_name)
-                
+
+                var now = moment()
+                var formattedTime = now.format('YYYY-MM-DD HH:mm:ss Z')
                 var currentHostDocument = vmDetailsCollection.findOne({'hostName':currentHost}).then(function(doc) {
                     if(doc)
                     {
@@ -28,7 +31,7 @@ exports.dbEntryTask = (taskType) => {
                             {_id:doc._id},
                             {$set:{
                                 hostName: currentHost,
-                                updated_on: currentTime,
+                                updated_on: formattedTime,
                                 status:taskType
                             }},dbOperationFinished);                        
                     }
@@ -37,7 +40,7 @@ exports.dbEntryTask = (taskType) => {
                         console.log('No record found.Inserting...');
                         vmDetailsCollection.insert({
                             userName: user,
-                            updated_on: currentTime,
+                            updated_on: formattedTime,
                             hostName: currentHost,
                             status:taskType
                         },dbOperationFinished)

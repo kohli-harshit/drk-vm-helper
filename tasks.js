@@ -26,23 +26,25 @@ exports.dbEntryTask = (taskType) => {
                 var currentHostDocument = vmDetailsCollection.findOne({'hostName':currentHost}).then(function(doc) {
                     if(doc)
                     {
-                        console.log('Record found. Updating...');
+                        console.log('Record found. Updating...'+process.argv[2]);
                         vmDetailsCollection.update(
                             {_id:doc._id},
                             {$set:{
                                 hostName: currentHost,
                                 updated_on: formattedTime,
-                                status:taskType
+                                status:taskType,
+                                team: process.argv[2]
                             }},dbOperationFinished);                        
                     }
                     else
                     {
-                        console.log('No record found.Inserting...');
+                        console.log('No record found.Inserting...'+process.argv[2]);
                         vmDetailsCollection.insert({
                             userName: user,
                             updated_on: formattedTime,
                             hostName: currentHost,
-                            status:taskType
+                            status:taskType,
+                            team: process.argv[2]
                         },dbOperationFinished)
                     }
                 });

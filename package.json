@@ -12,6 +12,7 @@
   "dependencies": {
     "mongodb": "^2.2.25",
     "retry": "^0.10.1",
-    "username": "^2.3.0"
+    "username": "^2.3.0",
+    "moment":"2.18.1"
   }
 }
